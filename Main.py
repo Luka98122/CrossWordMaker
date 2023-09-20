@@ -1,10 +1,172 @@
 import pygame
 import random
-import Button
-import Button1
-import InputBox
 from tkinter import Tk, filedialog
+import time
 
+time.sleep(5)
+
+
+class Button:
+    def __init__(self, rect, text, textSize) -> None:
+        self.rect = rect
+        self.text = text
+        self.textSize = textSize
+        self.font = pygame.font.Font(None, self.textSize)
+        self.text1 = self.font.render(self.text, True, pygame.Color("Black"))
+        self.text_rect = self.text1.get_rect(
+            center=(
+                self.rect.x + self.rect.width / 2,
+                self.rect.y + self.rect.height / 2,
+            )
+        )
+
+    def update(self, mouseB, mousePos):
+        if (
+            mousePos[0] > self.rect.x
+            and mousePos[0] < self.rect.x + self.rect.width
+            and mousePos[1] > self.rect.y
+            and mousePos[1] < self.rect.y + self.rect.height
+            and mouseB[0] == True
+        ):
+            return True
+        return False
+
+    def draw(self, window, activity, color=pygame.Color("Blue")):
+        if activity == True:
+            pygame.draw.rect(window, color, self.rect)
+        window.blit(self.text1, self.text_rect)
+
+
+class Button2:
+    def __init__(self, rect, text, textSize) -> None:
+        self.rect = rect
+        self.text = text
+        self.textSize = textSize
+
+    def update(self, mouseB, mousePos):
+        if (
+            mousePos[0] > self.rect.x
+            and mousePos[0] < self.rect.x + self.rect.width
+            and mousePos[1] > self.rect.y
+            and mousePos[1] < self.rect.y + self.rect.height
+            and mouseB[0] == True
+        ):
+            return True
+        return False
+
+    def draw(self, window):
+
+        pygame.draw.rect(window, pygame.Color("White"), self.rect)
+        pygame.draw.rect(window, pygame.Color("Black"), self.rect, 2)
+        font = pygame.font.Font(None, self.textSize)
+        text1 = font.render(self.text, True, pygame.Color("Black"))
+        text_rect = text1.get_rect(
+            center=(
+                self.rect.x + self.rect.width / 2,
+                self.rect.y + self.rect.height / 2,
+            )
+        )
+        window.blit(text1, text_rect)
+
+
+def quickCollide(pos, rect):
+    if (
+        pos[0] > rect.x
+        and pos[0] < rect.x + rect.w
+        and pos[1] > rect.y
+        and pos[1] < rect.y + rect.h
+    ):
+        return True
+    return False
+
+
+class inputBox:
+    def __init__(self, rect, limit, defaultText="Ukucaj tekst") -> None:
+
+        self.font = pygame.font.Font(None, 32)
+        self.input_box = rect
+        self.color_inactive = pygame.Color("lightskyblue3")
+        self.color_active = pygame.Color("dodgerblue2")
+        self.color = self.color_inactive
+        self.active = False
+        self.text = ""
+        self.lines = [""]
+        self.limit = limit
+        self.maxCD = 100
+        self.cd = self.maxCD
+
+    def update_text(self, text, font, box_width):
+        words = text.split(" ")
+        lines = [""]
+        for word in words:
+            temp_line = lines[-1] + " " + word if lines[-1] else word
+            temp_text = font.render(temp_line, True, self.color)
+            if temp_text.get_width() <= box_width:
+                lines[-1] = temp_line
+            else:
+                lines.append(word)
+        return lines
+
+    def update(self, mouseState, events, alwaysReturn=True):
+        self.cd -= 1
+        if self.active == True:
+            a = 2
+        if self.active == False:
+            self.color = self.color_inactive
+        for event in events:
+            if mouseState[0] == True:
+                mPos = pygame.mouse.get_pos()
+                if quickCollide(mPos, self.input_box) and self.cd < 0:
+                    self.active = not self.active
+                    self.cd = self.maxCD
+                    self.color = self.color_active
+                else:
+                    self.active = False
+
+            if event.type == pygame.KEYDOWN:
+                print("KD")
+                if self.active == True:
+                    print("ACTIVE")
+                    if event.key == pygame.K_RETURN:
+                        print(self.text)
+                        a = self.text
+                        self.text = ""
+                        self.lines = [""]
+                        print(a)
+                        return a
+
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.text = self.text[:-1]
+                    else:
+                        print("Text added")
+                        if len(self.text) < self.limit:
+                            self.text += event.unicode
+                            self.text = self.text.upper()
+                    self.lines = self.update_text(
+                        self.text, self.font, self.input_box.width - 10
+                    )
+                    text_surface = self.font.render(self.text, True, (0, 0, 0))
+                    while text_surface.get_width() > self.input_box.width - 10:
+                        # Remove the last character until it fits
+                        self.text = self.text[:-1]
+                        text_surface = self.font.render(self.text, True, (0, 0, 0))
+
+                    # if len(self.text) > 16:
+                    #    self.text = self.text[:-1]
+        if alwaysReturn:
+            return self.text
+
+    def draw(self, window):
+        if self.text == "":
+            txt_surface = self.font.render("Ukucaj rec", True, self.color)
+            window.blit(txt_surface, (self.input_box.x + 5, self.input_box.y + 5))
+        for i, line in enumerate(self.lines):
+            txt_surface = self.font.render(line, True, self.color)
+            window.blit(
+                txt_surface, (self.input_box.x + 5, self.input_box.y + 5 + i * 32)
+            )
+        self.input_box.h = max(32, len(self.lines) * 32)
+        pygame.draw.rect(window, self.color, self.input_box, 2)
 
 
 pygame.init()
@@ -36,7 +198,7 @@ def randomFill(board, mode, fakeButtonList,size):
             for j in range(len(board[i])):
                 let = latinicaString[random.randint(0,len(latinicaString)-1)]
                 board[i][j] = let
-                newB = Button.Button(pygame.Rect(j*size,i*size,size,size),let,size)
+                newB = Button(pygame.Rect(j*size,i*size,size,size),let,size)
                 fakeButtonList.append(newB)
                 
     if mode == "cir":
@@ -44,7 +206,7 @@ def randomFill(board, mode, fakeButtonList,size):
             for j in range(len(board[i])):
                 let = cirilicaString[random.randint(0,len(cirilicaString)-1)]
                 board[i][j] = let
-                newB = Button.Button(pygame.Rect(j*size,i*size,size,size),let,size)
+                newB = Button(pygame.Rect(j*size,i*size,size,size),let,size)
                 fakeButtonList.append(newB)              
 
             
@@ -143,14 +305,14 @@ def updateFakeButtons(board,fakeButtonList,size,mode):
         for i in range(len(board)):
             for j in range(len(board[i])):
                 let = board[i][j]
-                newB = Button.Button(pygame.Rect(j*size,i*size,size,size),let,size)
+                newB = Button(pygame.Rect(j*size,i*size,size,size),let,size)
                 fakeButtonList.append(newB)
                 
     if mode == "cir":
         for i in range(len(board)):
             for j in range(len(board[i])):
                 let = board[i][j]
-                newB = Button.Button(pygame.Rect(j*size,i*size,size,size),let,size)
+                newB = Button(pygame.Rect(j*size,i*size,size,size),let,size)
                 fakeButtonList.append(newB)   
     return board,fakeButtonList
     
@@ -209,15 +371,15 @@ SIZE = 32
 
 
 
-button_regenerateText = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,100,150,50),"Regenerisi tabelu", 26)
-button_confirmSetValue = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,300,150,50),"Potvrdi izmenu karaktera", 18)
-button_showAnswers = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,600,150,50), "Prikazi resenja", 24)
-button_save = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,700,150,50), "Sacuvaj", 24)
+button_regenerateText = Button2(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,100,150,50),"Regenerisi tabelu", 26)
+button_confirmSetValue = Button2(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,300,150,50),"Potvrdi izmenu karaktera", 18)
+button_showAnswers = Button2(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,600,150,50), "Prikazi resenja", 24)
+button_save = Button2(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,700,150,50), "Sacuvaj", 24)
 
 
 
-InputBox_valueToSet = InputBox.inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,200,SIZE//2,50), 1)
-InputBox_newWord = InputBox.inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8),400,SIZE//2*800//SIZE*SIZE,50), 800//SIZE*SIZE)
+InputBox_valueToSet = inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,200,SIZE//2,50), 1)
+InputBox_newWord = inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8),400,SIZE//2*800//SIZE*SIZE,50), 800//SIZE*SIZE)
 setValue = ""
 newWord = ""
 
@@ -249,16 +411,16 @@ board,fakeButtonList,protected_spots = addWord("sahmatira",board,SIZE,"lat",prot
 board,fakeButtonList,protected_spots = addWord("hemizar",board,SIZE,"lat",protected_spots)
 """
 
-submenu_button_32 = menu_button_novo = Button1.Button(pygame.Rect(300,200,400,200),"Velicina svakog polja 32", 32)
-submenu_button_16 = menu_button_novo = Button1.Button(pygame.Rect(300,550,400,200),"Velicina svakog polja 64", 32)
+submenu_button_32 = menu_button_novo = Button2(pygame.Rect(300,200,400,200),"Velicina svakog polja 32", 32)
+submenu_button_16 = menu_button_novo = Button2(pygame.Rect(300,550,400,200),"Velicina svakog polja 64", 32)
 
 
 showAnswers = True
 showAnswersMAXCD = 100
 showAnswersCD = 100
 frame = 0
-menu_button_novo = Button1.Button(pygame.Rect(300,200,400,200),"Kreni", 32)
-menu_button_exit = Button1.Button(pygame.Rect(300,550,400,200),"Zatvori Aplikaciju", 32)
+menu_button_novo = Button2(pygame.Rect(300,200,400,200),"Kreni", 32)
+menu_button_exit = Button2(pygame.Rect(300,550,400,200),"Zatvori Aplikaciju", 32)
 game = False
 while True:
     window.fill("White")
@@ -379,7 +541,7 @@ while True:
         if button_confirmSetValue.update(mouseState,mousePos):
             if selected_tile != [None,None]:
                 board[selected_tile[1]][selected_tile[0]] = setValue
-                newB = Button.Button(pygame.Rect(selected_tile[0]*SIZE,selected_tile[1]*SIZE,SIZE,SIZE),setValue,SIZE)
+                newB = Button(pygame.Rect(selected_tile[0]*SIZE,selected_tile[1]*SIZE,SIZE,SIZE),setValue,SIZE)
                 for button in fakeButtonList:
                     if button.rect.x == selected_tile[0]*SIZE and button.rect.y == selected_tile[1]*SIZE:
                         fakeButtonList.remove(button)
@@ -413,6 +575,6 @@ while True:
         if button_regenerateText.update(mouseState,mousePos):
             board,fakeButtonList = randomFill(board, "lat", [], SIZE)
             protected_spots = []
+            board,fakeButtonList,protected_spots = addWord("",board,SIZE,"lat",protected_spots)
         
         pygame.display.update()
-        
