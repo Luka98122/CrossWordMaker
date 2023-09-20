@@ -91,6 +91,11 @@ class inputBox:
             return self.text
 
     def draw(self, window):
+        if self.text == "":
+            txt_surface = self.font.render("Ukucaj rec", True, self.color)
+            window.blit(
+                txt_surface, (self.input_box.x + 5, self.input_box.y + 5)
+            )
         for i, line in enumerate(self.lines):
             txt_surface = self.font.render(line, True, self.color)
             window.blit(

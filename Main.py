@@ -69,7 +69,7 @@ def getTileClickedOn(mousePos,size):
     
 
 def addWord(word,board,size,mode,protectedSpots,depth=0):
-    if depth == 50 or len(word)>800//size+1:
+    if depth == 50 or len(word)>=800//size:
         butts = []
         board,butts = updateFakeButtons(board, [], size, mode)
         return [board,butts,protected_spots]
@@ -206,17 +206,13 @@ def get_file_path():
     return save_path
 
 SIZE = 32
-board = fillBoard(board,SIZE)
-board,fakeButtonList = randomFill(board, "lat", [], SIZE)
-selected_tile = [None,None]
 
 
 
-button_regenerateText = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,100,150,50),"Regenerate", 32)
-button_confirmSetValue = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,300,150,50),"Confirm replace", 24)
-button_addNewWord = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,500,150,50),"Confirm replace", 24)
-button_showAnswers = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,600,150,50), "Show Answers", 24)
-button_save = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,700,150,50), "Show Answers", 24)
+button_regenerateText = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,100,150,50),"Regenerisi tabelu", 26)
+button_confirmSetValue = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,300,150,50),"Potvrdi izmenu karaktera", 18)
+button_showAnswers = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,600,150,50), "Prikazi resenja", 24)
+button_save = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,700,150,50), "Sacuvaj", 24)
 
 
 
@@ -232,7 +228,7 @@ protected_spots = []
 protected_spots = []
 
 
-board,fakeButtonList,protected_spots = addWord("",board,SIZE,"lat",protected_spots)
+
 
 
 """
@@ -253,7 +249,8 @@ board,fakeButtonList,protected_spots = addWord("sahmatira",board,SIZE,"lat",prot
 board,fakeButtonList,protected_spots = addWord("hemizar",board,SIZE,"lat",protected_spots)
 """
 
-
+submenu_button_32 = menu_button_novo = Button1.Button(pygame.Rect(300,200,400,200),"Velicina svakog polja 32", 32)
+submenu_button_16 = menu_button_novo = Button1.Button(pygame.Rect(300,550,400,200),"Velicina svakog polja 64", 32)
 
 
 showAnswers = True
@@ -261,12 +258,57 @@ showAnswersMAXCD = 100
 showAnswersCD = 100
 frame = 0
 menu_button_novo = Button1.Button(pygame.Rect(300,200,400,200),"Kreni", 32)
-menu_button_novo = Button1.Button(pygame.Rect(300,200,400,200),"Kreni", 32)
-
+menu_button_exit = Button1.Button(pygame.Rect(300,550,400,200),"Zatvori Aplikaciju", 32)
+game = False
 while True:
     window.fill("White")
+    events = pygame.event.get()
+    for event in events:
+        if event.type == pygame.QUIT:
+            exit()
+    mouseState = pygame.mouse.get_pressed()
+    mousePos = pygame.mouse.get_pos()
+    if menu_button_novo.update(mouseState,mousePos):
+        game = True
+    if menu_button_exit.update(mouseState,mousePos):
+        exit()
     
-    while True:
+    menu_button_exit.draw(window)
+    menu_button_novo.draw(window)
+    
+    pygame.display.update()
+    
+    while game:
+        if frame == 0:
+            wasHolding = True
+            while True:
+                window.fill("White")
+                events = pygame.event.get()
+                for event in events:
+                    if event.type == pygame.QUIT:
+                        exit()
+                mouseState = pygame.mouse.get_pressed()
+                mousePos = pygame.mouse.get_pos()
+                
+                if mouseState[0] == False:
+                    wasHolding = False
+                
+                if submenu_button_32.update(mouseState,mousePos) and wasHolding == False:
+                    SIZE = 32
+                    break
+                if submenu_button_16.update(mouseState,mousePos) and wasHolding == False:
+                    SIZE = 64
+                    break
+                
+                submenu_button_32.draw(window)
+                submenu_button_16.draw(window)
+                
+                pygame.display.update()
+            
+            board = fillBoard(board,SIZE)
+            board,fakeButtonList = randomFill(board, "lat", [], SIZE)
+            selected_tile = [None,None]
+            board,fakeButtonList,protected_spots = addWord("",board,SIZE,"lat",protected_spots)
         frame +=1
         print(frame)
         
@@ -300,6 +342,12 @@ while True:
         
         window.fill("White")
         events = pygame.event.get()
+        
+        for event in events:
+            if event.type == pygame.QUIT:
+                exit()
+        
+        
         if selected_tile != [None,None]:
             pygame.draw.rect(window, pygame.Color("Blue"),pygame.Rect(selected_tile[0]*SIZE,selected_tile[1]*SIZE,SIZE,SIZE))
         mouseState = pygame.mouse.get_pressed()
@@ -309,6 +357,12 @@ while True:
             if res2 != [None,None]:
                 selected_tile = res2
 
+        keys = pygame.key.get_pressed()
+        
+        
+        if keys[pygame.K_ESCAPE]:
+            break
+        
         drawFakeButtons(fakeButtonList,window,showAnswers,protected_spots)
         drawGrid(window,SIZE)
         
@@ -352,6 +406,7 @@ while True:
         InputBox_valueToSet.draw(window)
         InputBox_newWord.draw(window)
         button_showAnswers.draw(window)
+        button_save.draw(window)
         # End of draw
         
         #Button Update
