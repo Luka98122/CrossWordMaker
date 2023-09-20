@@ -3,6 +3,7 @@ import random
 import Button
 import Button1
 import InputBox
+from tkinter import Tk, filedialog
 
 
 
@@ -68,11 +69,22 @@ def getTileClickedOn(mousePos,size):
     
 
 def addWord(word,board,size,mode,protectedSpots,depth=0):
-    if depth == 50:
+    if depth == 50 or len(word)>800//size+1:
         butts = []
         board,butts = updateFakeButtons(board, [], size, mode)
         return [board,butts,protected_spots]
+    dirWeights = [7,13,12,15,15,13,7,10]
+    choice = random.randint(0,92)
     dirs = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]]
+    cumulative_weight = 0
+    for i, weight in enumerate(dirWeights):
+        cumulative_weight += weight
+        if choice <= cumulative_weight:
+            selected_dir = dirs[i]
+            break
+    
+    
+
     wordLength = len(word)
     selectedDir = dirs[random.randint(0,7)]
     dirX = selectedDir[0]
@@ -82,7 +94,7 @@ def addWord(word,board,size,mode,protectedSpots,depth=0):
         startX = random.randint(0,len(board)-1)
     
     if dirX == 1:
-        startX = random.randint(0,len(board)-(wordLength+1))
+        startX = random.randint(0,len(board)-(wordLength))
     if dirX == -1:
         startX = random.randint(wordLength,len(board)-1)
     
@@ -113,7 +125,13 @@ def addWord(word,board,size,mode,protectedSpots,depth=0):
     return [board,butts,protected_spots]
     
     
+def save_img(window,size):
+    rect_x, rect_y, rect_width, rect_height = 0, 0, 800//size*size, 800//size*size
+    # Create a subsurface from the main surface
+    subsurface = window.subsurface(pygame.Rect(rect_x, rect_y, rect_width, rect_height))
 
+    # Save the subsurface as a PNG file
+    pygame.image.save(subsurface, "puzzle.png")
 
 
     startX = 0
@@ -181,8 +199,13 @@ def drawFakeButtons(fakeButtonList,window,showAnswers,protected_spots):
             
 
 
+def get_file_path():
+    root = Tk()
+    root.withdraw()  # Hide the root window
+    save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("Text files", "*.png"), ("All files", "*.*")])
+    return save_path
 
-SIZE = 64
+SIZE = 32
 board = fillBoard(board,SIZE)
 board,fakeButtonList = randomFill(board, "lat", [], SIZE)
 selected_tile = [None,None]
@@ -193,9 +216,12 @@ button_regenerateText = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SI
 button_confirmSetValue = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,300,150,50),"Confirm replace", 24)
 button_addNewWord = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,500,150,50),"Confirm replace", 24)
 button_showAnswers = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,600,150,50), "Show Answers", 24)
+button_save = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,700,150,50), "Show Answers", 24)
+
+
 
 InputBox_valueToSet = InputBox.inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,200,SIZE//2,50), 1)
-InputBox_newWord = InputBox.inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8),400,SIZE//2*6,50), 20)
+InputBox_newWord = InputBox.inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8),400,SIZE//2*800//SIZE*SIZE,50), 800//SIZE*SIZE)
 setValue = ""
 newWord = ""
 
@@ -206,72 +232,132 @@ protected_spots = []
 protected_spots = []
 
 
+board,fakeButtonList,protected_spots = addWord("",board,SIZE,"lat",protected_spots)
+
+
+"""
+board,fakeButtonList,protected_spots = addWord("almonijak",board,SIZE,"lat",protected_spots) 
 
 board,fakeButtonList,protected_spots = addWord("almonijak",board,SIZE,"lat",protected_spots)
+
 board,fakeButtonList,protected_spots = addWord("testing",board,SIZE,"lat",protected_spots)
+
 board,fakeButtonList,protected_spots = addWord("religija",board,SIZE,"lat",protected_spots)
+
 board,fakeButtonList,protected_spots = addWord("sahmatira",board,SIZE,"lat",protected_spots)
+
 board,fakeButtonList,protected_spots = addWord("hemizar",board,SIZE,"lat",protected_spots)
+
 board,fakeButtonList,protected_spots = addWord("sahmatira",board,SIZE,"lat",protected_spots)
+
 board,fakeButtonList,protected_spots = addWord("hemizar",board,SIZE,"lat",protected_spots)
-#board,fakeButtonList,protected_spots = addWord("hell",board,SIZE,"lat",protected_spots)
-showAnswers = False
+"""
+
+
+
+
+showAnswers = True
 showAnswersMAXCD = 100
 showAnswersCD = 100
-while True:
-    
-    showAnswersCD -=1
-    
-    window.fill("White")
-    events = pygame.event.get()
-    if selected_tile != [None,None]:
-        pygame.draw.rect(window, pygame.Color("Blue"),pygame.Rect(selected_tile[0]*SIZE,selected_tile[1]*SIZE,SIZE,SIZE))
-    mouseState = pygame.mouse.get_pressed()
-    mousePos = pygame.mouse.get_pos()
-    if mouseState[0]:
-        res2 = getTileClickedOn(mousePos,SIZE)
-        if res2 != [None,None]:
-            selected_tile = res2
+frame = 0
+menu_button_novo = Button1.Button(pygame.Rect(300,200,400,200),"Kreni", 32)
+menu_button_novo = Button1.Button(pygame.Rect(300,200,400,200),"Kreni", 32)
 
-    drawFakeButtons(fakeButtonList,window,showAnswers,protected_spots)
-    drawGrid(window,SIZE)
+while True:
+    window.fill("White")
     
-    # Buttons update
-    res = InputBox_valueToSet.update(mouseState,events)
-    res2 = InputBox_newWord.update(mouseState,events,False)
-    if res != None and res != "":
-        setValue = res
-    if res2 != None and res2 != "":
-        board,fakeButtonList,protected_spots = addWord(res2,board,SIZE,"lat",protected_spots)
-    
+    while True:
+        frame +=1
+        print(frame)
         
+        # Add words slowly
+        """
+        if frame == 200:
+        board,fakeButtonList,protected_spots = addWord("almonijak",board,SIZE,"lat",protected_spots) 
+        if frame == 200*2:
+            board,fakeButtonList,protected_spots = addWord("almonijak",board,SIZE,"lat",protected_spots)
+        if frame == 200*3:
+            board,fakeButtonList,protected_spots = addWord("testing",board,SIZE,"lat",protected_spots)
+        if frame == 200*4:
+            board,fakeButtonList,protected_spots = addWord("religija",board,SIZE,"lat",protected_spots)
+        if frame == 200*5:
+            board,fakeButtonList,protected_spots = addWord("sahmatira",board,SIZE,"lat",protected_spots)
+        if frame == 200*6:
+            board,fakeButtonList,protected_spots = addWord("hemizar",board,SIZE,"lat",protected_spots)
+        if frame == 200*7:
+            board,fakeButtonList,protected_spots = addWord("sahmatira",board,SIZE,"lat",protected_spots)
+        if frame == 200*8:
+            board,fakeButtonList,protected_spots = addWord("hemizar",board,SIZE,"lat",protected_spots)
+        if frame == 200*9:
+            rect_x, rect_y, rect_width, rect_height = 0, 0, 800//SIZE*SIZE, 800//SIZE*SIZE
+            # Create a subsurface from the main surface
+            subsurface = window.subsurface(pygame.Rect(rect_x, rect_y, rect_width, rect_height))
+
+            # Save the subsurface as a PNG file
+            pygame.image.save(subsurface, "puzzle.png")
+        """
+        showAnswersCD -=1
         
-    if button_confirmSetValue.update(mouseState,mousePos):
+        window.fill("White")
+        events = pygame.event.get()
         if selected_tile != [None,None]:
-            board[selected_tile[1]][selected_tile[0]] = setValue
-            newB = Button.Button(pygame.Rect(selected_tile[0]*SIZE,selected_tile[1]*SIZE,SIZE,SIZE),setValue,SIZE)
-            for button in fakeButtonList:
-                if button.rect.x == selected_tile[0]*SIZE and button.rect.y == selected_tile[1]*SIZE:
-                    fakeButtonList.remove(button)
-            fakeButtonList.append(newB)
-    
-    res3 = button_showAnswers.update(mouseState,mousePos)
-    if res3 and showAnswersCD<0:
-        showAnswers = not showAnswers
-        showAnswersCD = showAnswersMAXCD
+            pygame.draw.rect(window, pygame.Color("Blue"),pygame.Rect(selected_tile[0]*SIZE,selected_tile[1]*SIZE,SIZE,SIZE))
+        mouseState = pygame.mouse.get_pressed()
+        mousePos = pygame.mouse.get_pos()
+        if mouseState[0]:
+            res2 = getTileClickedOn(mousePos,SIZE)
+            if res2 != [None,None]:
+                selected_tile = res2
+
+        drawFakeButtons(fakeButtonList,window,showAnswers,protected_spots)
+        drawGrid(window,SIZE)
         
-    #Buttons draw
-    button_regenerateText.draw(window)
-    button_confirmSetValue.draw(window)
-    InputBox_valueToSet.draw(window)
-    InputBox_newWord.draw(window)
-    button_showAnswers.draw(window)
-    # End of draw
-    
-    #Button Update
-    if button_regenerateText.update(mouseState,mousePos):
-        pass
-        # board,fakeButtonList = randomFill(board, "lat", [], SIZE)
-    
-    pygame.display.update()
-    
+        # Buttons update
+        res = InputBox_valueToSet.update(mouseState,events)
+        res2 = InputBox_newWord.update(mouseState,events,False)
+        if res != None and res != "":
+            setValue = res
+        if res2 != None and res2 != "":
+            board,fakeButtonList,protected_spots = addWord(res2,board,SIZE,"lat",protected_spots)
+        
+            
+            
+        if button_confirmSetValue.update(mouseState,mousePos):
+            if selected_tile != [None,None]:
+                board[selected_tile[1]][selected_tile[0]] = setValue
+                newB = Button.Button(pygame.Rect(selected_tile[0]*SIZE,selected_tile[1]*SIZE,SIZE,SIZE),setValue,SIZE)
+                for button in fakeButtonList:
+                    if button.rect.x == selected_tile[0]*SIZE and button.rect.y == selected_tile[1]*SIZE:
+                        fakeButtonList.remove(button)
+                fakeButtonList.append(newB)
+        
+        res3 = button_showAnswers.update(mouseState,mousePos)
+        if res3 and showAnswersCD<0:
+            showAnswers = not showAnswers
+            showAnswersCD = showAnswersMAXCD
+        
+        res4 = button_save.update(mouseState,mousePos)
+        if res4:
+            file_path = get_file_path()
+            rect_x, rect_y, rect_width, rect_height = 0, 0, 800//SIZE*SIZE, 800//SIZE*SIZE
+            # Create a subsurface from the main surface
+            subsurface = window.subsurface(pygame.Rect(rect_x, rect_y, rect_width, rect_height))
+
+            # Save the subsurface as a PNG file
+            if file_path != "":
+                pygame.image.save(subsurface, file_path)
+        #Buttons draw
+        button_regenerateText.draw(window)
+        button_confirmSetValue.draw(window)
+        InputBox_valueToSet.draw(window)
+        InputBox_newWord.draw(window)
+        button_showAnswers.draw(window)
+        # End of draw
+        
+        #Button Update
+        if button_regenerateText.update(mouseState,mousePos):
+            board,fakeButtonList = randomFill(board, "lat", [], SIZE)
+            protected_spots = []
+        
+        pygame.display.update()
+        
