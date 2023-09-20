@@ -173,7 +173,7 @@ def drawFakeButtons(fakeButtonList,window,showAnswers,protected_spots):
         x = button.rect.x//SIZE
         y = button.rect.y//SIZE
         for thing in protected_spots:
-            if [y,x] in thing:
+            if [y,x] in thing and showAnswers:
                 button.draw(window,True, color=colors[protected_spots.index(thing)])
                 counter+=1
             else:
@@ -189,16 +189,18 @@ selected_tile = [None,None]
 
 
 
-#buttons
 button_regenerateText = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,100,150,50),"Regenerate", 32)
 button_confirmSetValue = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,300,150,50),"Confirm replace", 24)
 button_addNewWord = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,500,150,50),"Confirm replace", 24)
-
+button_showAnswers = Button1.Button(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,600,150,50), "Show Answers", 24)
 
 InputBox_valueToSet = InputBox.inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8)+10,200,SIZE//2,50), 1)
 InputBox_newWord = InputBox.inputBox(pygame.Rect(800//SIZE*SIZE+((1000-800//SIZE*SIZE)//8),400,SIZE//2*6,50), 20)
 setValue = ""
 newWord = ""
+
+
+protected_spots = []
 
 
 protected_spots = []
@@ -213,9 +215,13 @@ board,fakeButtonList,protected_spots = addWord("hemizar",board,SIZE,"lat",protec
 board,fakeButtonList,protected_spots = addWord("sahmatira",board,SIZE,"lat",protected_spots)
 board,fakeButtonList,protected_spots = addWord("hemizar",board,SIZE,"lat",protected_spots)
 #board,fakeButtonList,protected_spots = addWord("hell",board,SIZE,"lat",protected_spots)
-showAnswers = True
-
+showAnswers = False
+showAnswersMAXCD = 100
+showAnswersCD = 100
 while True:
+    
+    showAnswersCD -=1
+    
     window.fill("White")
     events = pygame.event.get()
     if selected_tile != [None,None]:
@@ -249,13 +255,17 @@ while True:
                     fakeButtonList.remove(button)
             fakeButtonList.append(newB)
     
-    
-    
+    res3 = button_showAnswers.update(mouseState,mousePos)
+    if res3 and showAnswersCD<0:
+        showAnswers = not showAnswers
+        showAnswersCD = showAnswersMAXCD
+        
     #Buttons draw
     button_regenerateText.draw(window)
     button_confirmSetValue.draw(window)
     InputBox_valueToSet.draw(window)
     InputBox_newWord.draw(window)
+    button_showAnswers.draw(window)
     # End of draw
     
     #Button Update
